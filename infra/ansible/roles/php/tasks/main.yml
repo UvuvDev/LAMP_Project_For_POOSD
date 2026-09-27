@@ -1,0 +1,69 @@
+---
+- name: Install PHP and the common extensions
+  ansible.builtin.apt:
+    name: "{{ php_packages + php_extra_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Detect the installed PHP version
+  ansible.builtin.command: php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;"
+  register: php_version_probe
+  changed_when: false
+
+- name: Record PHP version, service and socket
+  ansible.builtin.set_fact:
+    # Consumed by the apache role's vhost template and by the app role.
+    php_version: "{{ php_version_probe.stdout | trim }}"
+    php_fpm_service: "php{{ php_version_probe.stdout | trim }}-fpm"
+    php_fpm_socket: "/run/php/php{{ php_version_probe.stdout | trim }}-fpm.sock"
+
+- name: Create the PHP error log (FPM runs unprivileged and cannot create it)
+  ansible.builtin.file:
+    path: "{{ php_error_log }}"
+    state: touch
+    owner: "{{ app_user }}"
+    group: adm
+    mode: "0640"
+    access_time: preserve
+    modification_time: preserve
+
+- name: Rotate the PHP error log
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/php-lamp
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      {{ php_error_log }} {
+          weekly
+          rotate 8
+          missingok
+          notifempty
+          compress
+          delaycompress
+          create 0640 {{ app_user }} adm
+      }
+
+- name: Apply PHP-FPM ini overrides
+  ansible.builtin.template:
+    src: zz-lamp.ini.j2
+    dest: "/etc/php/{{ php_version }}/fpm/conf.d/99-lamp.ini"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart php-fpm
+
+- name: Apply PHP CLI ini overrides
+  ansible.builtin.template:
+    src: zz-lamp.ini.j2
+    dest: "/etc/php/{{ php_version }}/cli/conf.d/99-lamp.ini"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ensure PHP-FPM is running
+  ansible.builtin.service:
+    name: "{{ php_fpm_service }}"
+    state: started
+    enabled: true

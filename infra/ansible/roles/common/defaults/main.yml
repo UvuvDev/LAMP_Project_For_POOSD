@@ -1,0 +1,12 @@
+---
+common_base_packages:
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - htop
+  - rsync
+  - unzip
+  - vim
+  - acl
+common_apt_cache_valid_time: 3600

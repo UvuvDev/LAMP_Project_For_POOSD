@@ -1,0 +1,28 @@
+<?php
+// {{ ansible_managed }}
+// Liveness probe: reports HTTP 200 only when PHP and the database both answer.
+declare(strict_types=1);
+
+header('Content-Type: application/json');
+header('Cache-Control: no-store');
+
+$config = require '{{ app_config_dir }}/db.php';
+$checks = ['php' => PHP_VERSION, 'database' => false];
+
+try {
+    $pdo = new PDO($config['dsn'], $config['user'], $config['password'], $config['options']);
+    $pdo->query('SELECT 1');
+    $checks['database'] = true;
+} catch (Throwable $e) {
+    error_log('health: ' . $e->getMessage());
+}
+
+$healthy = $checks['database'] === true;
+http_response_code($healthy ? 200 : 503);
+
+echo json_encode([
+    'status' => $healthy ? 'ok' : 'degraded',
+    'checks' => $checks,
+    'host'   => gethostname(),
+    'time'   => gmdate('c'),
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";

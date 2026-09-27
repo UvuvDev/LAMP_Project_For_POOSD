@@ -1,0 +1,6 @@
+---
+app_directories:
+  - "{{ app_root }}"
+  - "{{ app_docroot }}"
+  - "{{ app_config_dir }}"
+  - "{{ app_root }}/storage"

@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  role_name: mariadb
+  description: Hardened local MariaDB server with an application database and user.
+  author: LAMP template
+  license: MIT
+  min_ansible_version: "2.15"
+dependencies: []

@@ -1,0 +1,13 @@
+---
+php_packages:
+  - php-fpm
+  - php-cli
+  - php-mysql
+  - php-curl
+  - php-mbstring
+  - php-xml
+  - php-zip
+  - php-gd
+  - php-intl
+  - php-opcache
+php_error_log: /var/log/php-errors.log

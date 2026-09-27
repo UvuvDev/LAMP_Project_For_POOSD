@@ -1,0 +1,18 @@
+---
+apache_packages:
+  - apache2
+apache_modules:
+  - rewrite
+  - headers
+  - ssl
+  - proxy
+  - proxy_fcgi
+  - setenvif
+  - expires
+  - remoteip
+apache_disabled_modules:
+  - status
+  - autoindex
+apache_server_admin: "webmaster@localhost"
+apache_log_format: combined
+apache_keepalive_timeout: 5

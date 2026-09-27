@@ -1,0 +1,12 @@
+---
+mariadb_packages:
+  - mariadb-server
+  - mariadb-client
+  - python3-pymysql
+
+# Localhost only. A remote DB belongs in Cloud SQL, not on a public port.
+mariadb_bind_address: "127.0.0.1"
+mariadb_max_connections: 100
+mariadb_innodb_buffer_pool_size: "256M"
+mariadb_character_set: utf8mb4
+mariadb_collation: utf8mb4_unicode_ci

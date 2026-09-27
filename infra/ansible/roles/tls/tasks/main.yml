@@ -1,0 +1,41 @@
+---
+- name: Validate the TLS settings
+  ansible.builtin.assert:
+    that:
+      - tls_domains | length > 0
+      - tls_email | length > 0
+    fail_msg: >-
+      tls_enabled is true, so tls_domains and tls_email must be set in
+      group_vars/all.yml, and every domain must already resolve to this VM.
+    quiet: true
+
+- name: Install certbot
+  ansible.builtin.apt:
+    name: "{{ tls_certbot_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Confirm each domain resolves to this server
+  ansible.builtin.command: "getent hosts {{ item }}"
+  loop: "{{ tls_domains }}"
+  register: tls_dns_probe
+  changed_when: false
+  failed_when: tls_dns_probe.rc != 0
+
+- name: Obtain the Let's Encrypt certificate
+  ansible.builtin.command:
+    argv: "{{ tls_certbot_argv }}"
+    creates: "/etc/letsencrypt/live/{{ tls_domains[0] }}/fullchain.pem"
+  vars:
+    tls_certbot_argv: "{{ ['certbot', '--apache', '--non-interactive', '--agree-tos',
+                       '--email', tls_email]
+                      + tls_certbot_extra_args.split()
+                      + (tls_domains | map('regex_replace', '^', '--domain=') | list) }}"
+  notify: Reload apache
+
+- name: Enable the renewal timer
+  ansible.builtin.service:
+    name: certbot.timer
+    state: started
+    enabled: true
