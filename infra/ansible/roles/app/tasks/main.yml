@@ -1,0 +1,59 @@
+---
+- name: Create the application directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: "{{ app_group }}"
+    mode: "0750"
+  loop: "{{ app_directories }}"
+
+- name: Make the writable storage directory owned by the web user
+  ansible.builtin.file:
+    path: "{{ app_root }}/storage"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: "0750"
+
+# Credentials live outside the document root and are never world-readable.
+- name: Deploy the database configuration
+  ansible.builtin.template:
+    src: db.php.j2
+    dest: "{{ app_config_dir }}/db.php"
+    owner: root
+    group: "{{ app_group }}"
+    mode: "0640"
+  no_log: true
+
+- name: Deploy your own application code
+  ansible.posix.synchronize:
+    src: "{{ app_source_dir | regex_replace('/?$', '/') }}"
+    dest: "{{ app_docroot }}/"
+    delete: true
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=.env"
+  when: app_source_dir | length > 0
+  notify: Reload apache
+
+- name: Deploy the sample landing page
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ app_docroot }}/{{ item }}"
+    owner: root
+    group: "{{ app_group }}"
+    mode: "0640"
+  loop:
+    - index.php
+    - health.php
+  when: app_source_dir | length == 0
+
+- name: Install the sample schema
+  ansible.builtin.copy:
+    src: schema.sql
+    dest: "{{ app_root }}/schema.sql"
+    owner: root
+    group: "{{ app_group }}"
+    mode: "0640"
+  notify: Load the sample schema

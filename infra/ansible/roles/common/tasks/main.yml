@@ -1,0 +1,61 @@
+---
+- name: Set the system timezone
+  community.general.timezone:
+    name: "{{ system_timezone }}"
+  notify: Restart cron
+
+- name: Update the apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ common_apt_cache_valid_time }}"
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name: "{{ common_base_packages }}"
+    state: present
+
+- name: Install unattended-upgrades
+  ansible.builtin.apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+  when: unattended_upgrades_enabled | bool
+
+- name: Enable automatic security updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      APT::Periodic::AutocleanInterval "7";
+  when: unattended_upgrades_enabled | bool
+
+- name: Install fail2ban
+  ansible.builtin.apt:
+    name:
+      - fail2ban
+      # The sshd jail reads the journal, which needs the systemd bindings.
+      - python3-systemd
+    state: present
+  when: fail2ban_enabled | bool
+
+- name: Configure the fail2ban sshd jail
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart fail2ban
+  when: fail2ban_enabled | bool
+
+- name: Ensure fail2ban is running
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true
+  when: fail2ban_enabled | bool

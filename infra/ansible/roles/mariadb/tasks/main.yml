@@ -1,0 +1,67 @@
+---
+- name: Install MariaDB
+  ansible.builtin.apt:
+    name: "{{ mariadb_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Apply server configuration
+  ansible.builtin.template:
+    src: 99-lamp.cnf.j2
+    dest: /etc/mysql/mariadb.conf.d/99-lamp.cnf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart mariadb
+
+- name: Ensure MariaDB is running
+  ansible.builtin.service:
+    name: mariadb
+    state: started
+    enabled: true
+
+- name: Apply pending configuration before touching schemas
+  ansible.builtin.meta: flush_handlers
+
+# root keeps unix_socket authentication, so these tasks run as the root OS user
+# and no root password is ever stored on disk.
+- name: Remove anonymous database users
+  ansible.mysql.mysql_user:
+    name: ""
+    host_all: true
+    state: absent
+    login_unix_socket: "{{ mariadb_socket }}"
+
+- name: Remove the test database
+  ansible.mysql.mysql_db:
+    name: test
+    state: absent
+    login_unix_socket: "{{ mariadb_socket }}"
+
+- name: Restrict root to local logins
+  ansible.mysql.mysql_query:
+    query: >-
+      DELETE FROM mysql.global_priv
+      WHERE User = 'root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+    login_unix_socket: "{{ mariadb_socket }}"
+  register: mariadb_root_cleanup
+  changed_when: mariadb_root_cleanup.rowcount[0] | default(0) > 0
+
+- name: Create the application database
+  ansible.mysql.mysql_db:
+    name: "{{ db_name }}"
+    encoding: "{{ mariadb_character_set }}"
+    collation: "{{ mariadb_collation }}"
+    state: present
+    login_unix_socket: "{{ mariadb_socket }}"
+
+- name: Create the application database user
+  ansible.mysql.mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    host: "{{ db_host }}"
+    priv: "{{ db_name }}.*:ALL"
+    state: present
+    login_unix_socket: "{{ mariadb_socket }}"
+  no_log: true

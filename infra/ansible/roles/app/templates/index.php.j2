@@ -1,0 +1,104 @@
+<?php
+// {{ ansible_managed }}
+declare(strict_types=1);
+
+$config = require '{{ app_config_dir }}/db.php';
+
+$dbStatus = 'unknown';
+$dbVersion = '-';
+$visits = [];
+
+try {
+    $pdo = new PDO($config['dsn'], $config['user'], $config['password'], $config['options']);
+    $dbVersion = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
+
+    $insert = $pdo->prepare('INSERT INTO visits (ip, user_agent) VALUES (:ip, :ua)');
+    $insert->execute([
+        ':ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        ':ua' => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+    ]);
+
+    $visits = $pdo->query('SELECT id, ip, created_at FROM visits ORDER BY id DESC LIMIT 5')->fetchAll();
+    $dbStatus = 'connected';
+} catch (Throwable $e) {
+    // Details go to the error log, never to the browser.
+    error_log('DB error: ' . $e->getMessage());
+    $dbStatus = 'unavailable';
+}
+
+$esc = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
+?>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ app_name }} - LAMP on GCP</title>
+<style>
+  :root { color-scheme: light dark; --fg: #1a1a1a; --bg: #f7f7f5; --card: #fff; --muted: #6b6b6b; --ok: #1a7f37; --bad: #b42318; --line: #e3e3e0; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #ececec; --bg: #17181a; --card: #1f2023; --muted: #a0a0a0; --ok: #4ac26b; --bad: #f97066; --line: #303236; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 2.5rem 1.25rem; background: var(--bg); color: var(--fg);
+         font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 46rem; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; letter-spacing: -.01em; }
+  p.sub { color: var(--muted); margin: 0 0 2rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 1.25rem 1.4rem; margin-bottom: 1rem; }
+  h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 .9rem; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: .45rem 1.25rem; margin: 0; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { text-align: left; padding: .45rem .5rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); }
+  code { background: rgba(127,127,127,.14); padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>{{ app_name }} is running</h1>
+  <p class="sub">Provisioned with Terraform and Ansible on Google Cloud.</p>
+
+  <section class="card">
+    <h2>Stack</h2>
+    <dl>
+      <dt>Server</dt><dd><?= $esc($_SERVER['SERVER_SOFTWARE'] ?? 'Apache') ?></dd>
+      <dt>PHP</dt><dd><?= $esc(PHP_VERSION) ?> (<?= $esc(PHP_SAPI) ?>)</dd>
+      <dt>MariaDB</dt><dd><?= $esc($dbVersion) ?></dd>
+      <dt>Database</dt>
+      <dd class="<?= $dbStatus === 'connected' ? 'ok' : 'bad' ?>"><?= $esc($dbStatus) ?></dd>
+      <dt>Host</dt><dd><?= $esc(gethostname() ?: 'unknown') ?></dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Recent visits</h2>
+    <?php if ($visits): ?>
+    <table>
+      <thead><tr><th>#</th><th>Client</th><th>When (UTC)</th></tr></thead>
+      <tbody>
+      <?php foreach ($visits as $row): ?>
+        <tr>
+          <td><?= $esc((string) $row['id']) ?></td>
+          <td><?= $esc((string) $row['ip']) ?></td>
+          <td><?= $esc((string) $row['created_at']) ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    <?php else: ?>
+    <p class="bad">No rows - the database is not reachable.</p>
+    <?php endif; ?>
+  </section>
+
+  <section class="card">
+    <h2>Next steps</h2>
+    <p>Replace this page by pointing <code>app_source_dir</code> at your own code in
+       <code>ansible/group_vars/all.yml</code>, then re-run <code>make provision</code>.</p>
+  </section>
+</main>
+</body>
+</html>

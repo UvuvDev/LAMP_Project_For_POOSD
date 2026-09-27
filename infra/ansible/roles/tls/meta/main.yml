@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  role_name: tls
+  description: Let's Encrypt certificates via certbot with automatic renewal.
+  author: LAMP template
+  license: MIT
+  min_ansible_version: "2.15"
+dependencies: []

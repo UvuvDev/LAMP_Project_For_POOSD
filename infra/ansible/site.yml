@@ -1,0 +1,56 @@
+---
+- name: Provision a LAMP server on GCP
+  hosts: lamp
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Fail early when the database password was never set
+      ansible.builtin.assert:
+        that:
+          - db_password is defined
+          - db_password | length >= 12
+        fail_msg: >-
+          db_password is unset or too short. Create ansible/group_vars/vault.yml
+          (see vault.yml.example, or run `make secrets`) before provisioning.
+        quiet: true
+
+    - name: Wait for the instance to accept SSH
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+        sleep: 5
+
+  roles:
+    - role: common
+      tags: [common]
+    - role: php
+      tags: [php]
+    - role: mariadb
+      tags: [db, mariadb]
+    - role: apache
+      tags: [web, apache]
+    - role: app
+      tags: [app]
+    - role: tls
+      tags: [tls]
+      when: tls_enabled | bool
+
+  post_tasks:
+    - name: Verify the site answers over HTTP
+      ansible.builtin.uri:
+        # With TLS on, the vhost redirects to HTTPS and the certificate does
+        # not match the loopback address, so skip verification here only.
+        url: "http://127.0.0.1/health.php"
+        follow_redirects: all
+        validate_certs: false
+        return_content: true
+        status_code: 200
+      register: health
+      retries: 5
+      delay: 3
+      until: health is succeeded
+      changed_when: false
+
+    - name: Report health check result
+      ansible.builtin.debug:
+        msg: "{{ health.content | from_json }}"

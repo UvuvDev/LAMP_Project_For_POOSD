@@ -1,0 +1,12 @@
+---
+# Copy to group_vars/vault.yml, set a real password, then encrypt it:
+#
+#   cp group_vars/vault.yml.example group_vars/vault.yml
+#   openssl rand -base64 24            # generate a password
+#   $EDITOR group_vars/vault.yml
+#   ansible-vault encrypt group_vars/vault.yml
+#
+# `make secrets` from infra/ does the copy + generation for you.
+# vault.yml is gitignored; vault.yml.example is not.
+
+vault_db_password: "replace-me-with-a-long-random-password"

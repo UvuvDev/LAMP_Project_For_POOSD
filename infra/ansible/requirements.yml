@@ -1,0 +1,9 @@
+---
+collections:
+  # The MySQL/MariaDB modules moved to the ansible.mysql namespace.
+  - name: ansible.mysql
+    version: ">=5.0.0"
+  - name: community.general
+    version: ">=8.0.0"
+  - name: ansible.posix
+    version: ">=1.5.0"

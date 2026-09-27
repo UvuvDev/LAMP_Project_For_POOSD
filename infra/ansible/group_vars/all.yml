@@ -1,0 +1,51 @@
+---
+# ---------------------------------------------------------------------------
+# Application
+# ---------------------------------------------------------------------------
+app_name: lamp
+app_root: "/var/www/{{ app_name }}"
+app_docroot: "{{ app_root }}/public"
+app_config_dir: "{{ app_root }}/config"
+app_user: www-data
+app_group: www-data
+
+# Hostnames the vhost answers to. Leave the default to serve on the raw IP.
+app_server_name: "{{ ansible_host }}"
+app_server_aliases: []
+
+# Set to a directory on the control machine to deploy your own code instead of
+# the bundled sample page (its contents are copied into app_docroot).
+app_source_dir: ""
+
+# ---------------------------------------------------------------------------
+# Database (MariaDB, local to the VM)
+# ---------------------------------------------------------------------------
+db_name: "{{ app_name }}"
+db_user: "{{ app_name }}"
+db_host: localhost
+db_password: "{{ vault_db_password | default('') }}"
+
+# ---------------------------------------------------------------------------
+# PHP
+# ---------------------------------------------------------------------------
+php_memory_limit: "256M"
+php_upload_max_filesize: "32M"
+php_post_max_size: "32M"
+php_max_execution_time: 60
+php_timezone: "UTC"
+php_display_errors: "Off"
+php_extra_packages: []
+
+# ---------------------------------------------------------------------------
+# TLS (Let's Encrypt). Requires a real DNS name pointing at the VM.
+# ---------------------------------------------------------------------------
+tls_enabled: false
+tls_domains: []
+tls_email: ""
+
+# ---------------------------------------------------------------------------
+# Host basics
+# ---------------------------------------------------------------------------
+system_timezone: "UTC"
+fail2ban_enabled: true
+unattended_upgrades_enabled: true

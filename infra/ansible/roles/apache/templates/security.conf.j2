@@ -1,0 +1,31 @@
+# {{ ansible_managed }}
+ServerTokens Prod
+ServerSignature Off
+TraceEnable Off
+FileETag None
+
+KeepAlive On
+KeepAliveTimeout {{ apache_keepalive_timeout }}
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always unset X-Powered-By
+{% if tls_enabled | bool %}
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+{% endif %}
+</IfModule>
+
+# Nothing outside a document root is ever served.
+<Directory />
+    Options None
+    AllowOverride None
+    Require all denied
+</Directory>
+
+# Dotfiles (.git, .env, .htpasswd) stay private.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

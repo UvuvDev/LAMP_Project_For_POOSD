@@ -1,0 +1,25 @@
+; {{ ansible_managed }}
+memory_limit = {{ php_memory_limit }}
+upload_max_filesize = {{ php_upload_max_filesize }}
+post_max_size = {{ php_post_max_size }}
+max_execution_time = {{ php_max_execution_time }}
+date.timezone = {{ php_timezone }}
+
+; Do not leak PHP internals to visitors.
+expose_php = Off
+display_errors = {{ php_display_errors }}
+display_startup_errors = Off
+log_errors = On
+error_log = {{ php_error_log }}
+
+; Session hardening
+session.cookie_httponly = 1
+session.cookie_samesite = "Lax"
+session.use_strict_mode = 1
+
+; Opcache
+opcache.enable = 1
+opcache.memory_consumption = 128
+opcache.max_accelerated_files = 10000
+opcache.validate_timestamps = 1
+opcache.revalidate_freq = 2

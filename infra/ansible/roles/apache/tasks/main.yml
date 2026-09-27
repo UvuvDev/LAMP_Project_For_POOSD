@@ -1,0 +1,76 @@
+---
+- name: Install Apache
+  ansible.builtin.apt:
+    name: "{{ apache_packages }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Use the event MPM (php-fpm handles PHP, so prefork is unnecessary)
+  community.general.apache2_module:
+    name: "{{ item.name }}"
+    state: "{{ item.state }}"
+    ignore_configcheck: true
+  loop:
+    - { name: mpm_prefork, state: absent }
+    - { name: mpm_event, state: present }
+  notify: Restart apache
+
+- name: Enable required modules
+  community.general.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ apache_modules }}"
+  notify: Restart apache
+
+- name: Disable modules that expose information or listings
+  community.general.apache2_module:
+    name: "{{ item }}"
+    state: absent
+    force: true
+  loop: "{{ apache_disabled_modules }}"
+  notify: Restart apache
+
+- name: Apply hardening defaults
+  ansible.builtin.template:
+    src: security.conf.j2
+    dest: /etc/apache2/conf-available/zz-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart apache
+
+- name: Enable the hardening config
+  ansible.builtin.file:
+    src: /etc/apache2/conf-available/zz-hardening.conf
+    dest: /etc/apache2/conf-enabled/zz-hardening.conf
+    state: link
+  notify: Restart apache
+
+- name: Deploy the application vhost
+  ansible.builtin.template:
+    src: vhost.conf.j2
+    dest: "/etc/apache2/sites-available/{{ app_name }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart apache
+
+- name: Enable the application vhost
+  ansible.builtin.file:
+    src: "/etc/apache2/sites-available/{{ app_name }}.conf"
+    dest: "/etc/apache2/sites-enabled/{{ app_name }}.conf"
+    state: link
+  notify: Restart apache
+
+- name: Disable the stock default vhost
+  ansible.builtin.file:
+    path: /etc/apache2/sites-enabled/000-default.conf
+    state: absent
+  notify: Restart apache
+
+- name: Ensure Apache is running
+  ansible.builtin.service:
+    name: apache2
+    state: started
+    enabled: true

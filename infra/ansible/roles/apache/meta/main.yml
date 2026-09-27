@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  role_name: apache
+  description: Apache httpd with the event MPM, PHP-FPM proxying and security headers.
+  author: LAMP template
+  license: MIT
+  min_ansible_version: "2.15"
+dependencies: []

@@ -1,0 +1,7 @@
+---
+tls_certbot_packages:
+  - certbot
+  - python3-certbot-apache
+# Our own vhost template owns the HTTP->HTTPS redirect, so certbot must not
+# rewrite the vhost itself (it would be overwritten on the next run).
+tls_certbot_extra_args: "--no-redirect --keep-until-expiring"

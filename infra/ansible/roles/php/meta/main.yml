@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  role_name: php
+  description: PHP-FPM with the extensions a typical LAMP app needs.
+  author: LAMP template
+  license: MIT
+  min_ansible_version: "2.15"
+dependencies: []
