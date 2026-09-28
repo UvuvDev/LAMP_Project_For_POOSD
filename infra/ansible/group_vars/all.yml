@@ -15,13 +15,30 @@ app_server_aliases: []
 
 # Set to a directory on the control machine to deploy your own code instead of
 # the bundled sample page (its contents are copied into app_docroot).
-app_source_dir: ""
+app_source_dir: "{{ playbook_dir }}/../.."
+
+# Paths under app_source_dir that must never reach the public document root.
+# Excluded paths are also protected from rsync --delete.
+app_sync_excludes:
+  - ".*"
+  - "infra/"
+  - "*.sql"
+  - "*.sh"
+  - "*.md"
+  - "health.php"
+
+# SQL files under app_source_dir imported once, when the database has no
+# Users table yet. Drop sample_data.sql to start without the demo accounts.
+app_schema_files:
+  - create_schema.sql
+  - sample_data.sql
 
 # ---------------------------------------------------------------------------
 # Database (MariaDB, local to the VM)
 # ---------------------------------------------------------------------------
-db_name: "{{ app_name }}"
-db_user: "{{ app_name }}"
+# These match the names hardcoded in create_schema.sql and sample_data.sql.
+db_name: ContactsAppDB
+db_user: ContactsAppUser
 db_host: localhost
 db_password: "{{ vault_db_password | default('') }}"
 

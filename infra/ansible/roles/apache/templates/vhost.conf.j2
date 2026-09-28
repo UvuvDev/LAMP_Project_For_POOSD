@@ -21,6 +21,8 @@
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
+        # Hand the Authorization header (API bearer tokens) through to PHP-FPM.
+        CGIPassAuth On
     </Directory>
 
     # PHP requests are proxied to the FPM pool over its unix socket.

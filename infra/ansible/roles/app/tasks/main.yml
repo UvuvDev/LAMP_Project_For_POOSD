@@ -31,23 +31,27 @@
     src: "{{ app_source_dir | regex_replace('/?$', '/') }}"
     dest: "{{ app_docroot }}/"
     delete: true
-    rsync_opts:
-      - "--exclude=.git"
-      - "--exclude=.env"
+    rsync_opts: "{{ (['.git', '.env'] + app_sync_excludes) | map('regex_replace', '^', '--exclude=') | list }}"
   when: app_source_dir | length > 0
   notify: Reload apache
 
 - name: Deploy the sample landing page
   ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ app_docroot }}/{{ item }}"
+    src: index.php.j2
+    dest: "{{ app_docroot }}/index.php"
     owner: root
     group: "{{ app_group }}"
     mode: "0640"
-  loop:
-    - index.php
-    - health.php
   when: app_source_dir | length == 0
+
+# The playbook's post-task health check needs this whichever code is deployed.
+- name: Deploy the health probe
+  ansible.builtin.template:
+    src: health.php.j2
+    dest: "{{ app_docroot }}/health.php"
+    owner: root
+    group: "{{ app_group }}"
+    mode: "0640"
 
 - name: Install the sample schema
   ansible.builtin.copy:
@@ -57,3 +61,28 @@
     group: "{{ app_group }}"
     mode: "0640"
   notify: Load the sample schema
+  when: app_source_dir | length == 0
+
+- name: Check whether the application schema is loaded
+  ansible.mysql.mysql_query:
+    query: >-
+      SELECT COUNT(*) AS tables_found FROM information_schema.tables
+      WHERE table_schema = %s AND table_name = 'Users'
+    positional_args:
+      - "{{ db_name }}"
+    login_unix_socket: "{{ mariadb_socket | default('/run/mysqld/mysqld.sock') }}"
+  register: app_schema_state
+  changed_when: false
+  when: app_source_dir | length > 0 and app_schema_files | length > 0
+
+# Imported only into an empty database, so re-runs never duplicate seed rows.
+- name: Import the application schema
+  ansible.mysql.mysql_db:
+    name: "{{ db_name }}"
+    state: import
+    target: "{{ app_source_dir | regex_replace('/?$', '/') }}{{ item }}"
+    login_unix_socket: "{{ mariadb_socket | default('/run/mysqld/mysqld.sock') }}"
+  loop: "{{ app_schema_files }}"
+  when:
+    - app_schema_state is not skipped
+    - app_schema_state.query_result[0][0].tables_found | int == 0
