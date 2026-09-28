@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Administration | COP 4331</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="alternate icon" href="favicon.ico">
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="js/admin.js" defer></script>
+</head>
+<body class="py-4 py-md-5">
+    <div class="background-glow"></div>
+    <main class="container">
+        <header class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4 pb-3 border-bottom border-secondary-subtle gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="app-icon-wrapper-sm"><i class="bi bi-shield-lock-fill"></i></div>
+                <div>
+                    <h1 id="title" class="h3 fw-bold mb-0">User Administration</h1>
+                    <span class="small text-secondary-contrast">Signed in as <strong id="adminName"></strong></span>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="contact.html" class="btn btn-outline-light btn-sm rounded-pill px-3">
+                    <i class="bi bi-arrow-left me-1"></i> Contacts
+                </a>
+                <button id="adminLogout" type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                    <i class="bi bi-box-arrow-right me-1"></i> Log Out
+                </button>
+            </div>
+        </header>
+
+        <section class="card glass-card shadow-lg border-0 p-4 mb-4">
+            <div class="card-body p-0">
+                <h2 class="h5 fw-bold mb-3"><i class="bi bi-person-plus-fill text-primary me-2"></i>Create Administrator</h2>
+                <form id="createAdminForm" class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="adminFirstName" class="form-label form-label-contrast">First name</label>
+                        <input id="adminFirstName" class="form-control" maxlength="50" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="adminLastName" class="form-label form-label-contrast">Last name</label>
+                        <input id="adminLastName" class="form-control" maxlength="50" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="adminUsername" class="form-label form-label-contrast">Username</label>
+                        <input id="adminUsername" class="form-control" maxlength="50" autocomplete="off" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="adminPassword" class="form-label form-label-contrast">Temporary password</label>
+                        <input id="adminPassword" type="password" class="form-control" minlength="8" autocomplete="new-password" required>
+                    </div>
+                    <div class="col-12 d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-person-plus me-1"></i> Create Admin
+                        </button>
+                        <span id="adminResult" class="small fw-semibold" aria-live="polite"></span>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section class="card glass-card shadow-lg border-0 p-4">
+            <div class="card-body p-0">
+                <h2 class="h5 fw-bold mb-3"><i class="bi bi-people-fill text-primary me-2"></i>Users</h2>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Username</th>
+                                <th scope="col">Role</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userRows"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

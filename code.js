@@ -1,17 +1,20 @@
-const urlBase = (typeof window !== 'undefined' && window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.origin.includes('johnaedo')))
-  ? '/api/index.php'
-  : 'https://lamp.johnaedo.com/api/index.php';
+const apiBase = '/api';
 
-const loginUrlBase = urlBase;
+const urlBase = apiBase + '/index.php';
+const loginUrlBase = apiBase + '/login.php';
 
 let userId = 0;
 let firstName = "";
 let lastName = "";
+let userRole = "user";
+let authToken = "";
 
 function doLogin() {
   userId = 0;
   firstName = "";
   lastName = "";
+  userRole = "user";
+  authToken = "";
 
   let loginInput = document.getElementById("loginName");
   let passwordInput = document.getElementById("loginPassword");
@@ -20,7 +23,7 @@ function doLogin() {
 
   document.getElementById("loginResult").innerHTML = "";
 
-  let jsonPayload = JSON.stringify({ login: login, password: password });
+  let jsonPayload = JSON.stringify({ username: login, password: password });
   let url = loginUrlBase;
 
   let xhr = new XMLHttpRequest();
@@ -31,7 +34,8 @@ function doLogin() {
       if (this.readyState === 4) {
         if (this.status === 200) {
           let jsonObject = JSON.parse(xhr.responseText);
-          userId = jsonObject.id;
+          let user = jsonObject.user || {};
+          userId = Number(user.id);
 
           if (userId < 1) {
             document.getElementById("loginResult").innerHTML =
@@ -39,14 +43,26 @@ function doLogin() {
             return;
           }
 
-          firstName = jsonObject.firstName;
-          lastName = jsonObject.lastName;
+          firstName = user.firstName || "";
+          lastName = user.lastName || "";
+          userRole = user.role || "user";
+          authToken = jsonObject.token || "";
+
+          if (!authToken) {
+            document.getElementById("loginResult").textContent = "Login did not return a session token";
+            return;
+          }
 
           saveCookie();
           window.location.href = "contact.html";
         } else {
-          document.getElementById("loginResult").innerHTML =
-            "<i class='bi bi-exclamation-circle-fill me-1'></i> Login failed";
+          let message = "Login failed";
+          try {
+            message = JSON.parse(xhr.responseText).error || message;
+          } catch (error) {
+            // Keep the generic message when the server does not return JSON.
+          }
+          document.getElementById("loginResult").textContent = message;
         }
       }
     };
@@ -57,46 +73,39 @@ function doLogin() {
 }
 
 function saveCookie() {
-  let minutes = 20;
-  let date = new Date();
-  date.setTime(date.getTime() + minutes * 60 * 1000);
-  document.cookie =
-    "firstName=" +
-    encodeURIComponent(firstName) +
-    ",lastName=" +
-    encodeURIComponent(lastName) +
-    ",userId=" +
-    userId +
-    ";expires=" +
-    date.toGMTString() +
-    ";path=/";
+  sessionStorage.setItem("lampSession", JSON.stringify({
+    userId: userId,
+    firstName: firstName,
+    lastName: lastName,
+    role: userRole,
+    token: authToken
+  }));
 }
 
 function readCookie() {
-  userId = -1;
-  let data = document.cookie;
-  let splits = data.split(";");
-  for (var i = 0; i < splits.length; i++) {
-    let pair = splits[i].trim();
-    let tokens = pair.split(",");
-    for (var j = 0; j < tokens.length; j++) {
-      let keyVal = tokens[j].trim().split("=");
-      if (keyVal[0] === "firstName") {
-        firstName = decodeURIComponent(keyVal[1] || "");
-      } else if (keyVal[0] === "lastName") {
-        lastName = decodeURIComponent(keyVal[1] || "");
-      } else if (keyVal[0] === "userId") {
-        userId = parseInt(keyVal[1].trim());
-      }
-    }
+  let savedSession = null;
+  try {
+    savedSession = JSON.parse(sessionStorage.getItem("lampSession"));
+  } catch (error) {
+    savedSession = null;
   }
 
-  if (userId < 0 || isNaN(userId)) {
+  userId = savedSession ? Number(savedSession.userId) : -1;
+  firstName = savedSession ? savedSession.firstName : "";
+  lastName = savedSession ? savedSession.lastName : "";
+  userRole = savedSession ? savedSession.role : "user";
+  authToken = savedSession ? savedSession.token : "";
+
+  if (userId < 1 || isNaN(userId) || !authToken) {
     window.location.href = "index.html";
   } else {
     let userNameEl = document.getElementById("userName");
     if (userNameEl) {
-      userNameEl.innerHTML = `<i class="bi bi-person-circle me-1 text-primary"></i> <span>Logged in as <strong class="text-white">${firstName} ${lastName}</strong></span>`;
+      userNameEl.textContent = `Logged in as ${firstName} ${lastName}`;
+    }
+    let adminLink = document.getElementById("adminLink");
+    if (adminLink && userRole === "admin") {
+      adminLink.classList.remove("d-none");
     }
     searchContacts();
   }
@@ -106,9 +115,9 @@ function doLogout() {
   userId = 0;
   firstName = "";
   lastName = "";
-  document.cookie = "firstName=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-  document.cookie = "lastName=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-  document.cookie = "userId=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+  userRole = "user";
+  authToken = "";
+  sessionStorage.removeItem("lampSession");
   window.location.href = "index.html";
 }
 
@@ -130,7 +139,7 @@ function addContact() {
   let xhr = new XMLHttpRequest();
   xhr.open("POST", url, true);
   xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
-  xhr.setRequestHeader("Authorization", "Bearer " + userId);
+  xhr.setRequestHeader("Authorization", "Bearer " + authToken);
   xhr.setRequestHeader("X-User-Id", userId);
 
   try {
@@ -170,7 +179,7 @@ function searchContacts() {
 
   let xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
-  xhr.setRequestHeader("Authorization", "Bearer " + userId);
+  xhr.setRequestHeader("Authorization", "Bearer " + authToken);
   xhr.setRequestHeader("X-User-Id", userId);
 
   try {
@@ -222,7 +231,7 @@ function deleteContact(identifier) {
 
   let xhr = new XMLHttpRequest();
   xhr.open("DELETE", url, true);
-  xhr.setRequestHeader("Authorization", "Bearer " + userId);
+  xhr.setRequestHeader("Authorization", "Bearer " + authToken);
   xhr.setRequestHeader("X-User-Id", userId);
 
   try {

@@ -65,8 +65,8 @@ CREATE TABLE IF NOT EXISTS `Sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. Create application database user & grant permissions.
--- Note: replace the password below for real/production deployments.
-CREATE USER IF NOT EXISTS 'ContactsAppUser'@'localhost' IDENTIFIED BY 'WeLoveCOP4331!';
+-- Replace this placeholder before running the script outside a local demo.
+CREATE USER IF NOT EXISTS 'ContactsAppUser'@'localhost' IDENTIFIED BY 'change-me-before-running';
 GRANT ALL PRIVILEGES ON `ContactsAppDB`.* TO 'ContactsAppUser'@'localhost';
 
 FLUSH PRIVILEGES;
