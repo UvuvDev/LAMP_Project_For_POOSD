@@ -44,7 +44,7 @@ require_commands() {
     fi
   done
 
-  for required_file in create_schema.sql sample_data.sql index.html; do
+  for required_file in create_schema.sql sample_data.sql index.html register.html api/index.php; do
     if [[ ! -f "$PROJECT_DIR/$required_file" ]]; then
       echo "Required project file not found: $PROJECT_DIR/$required_file" >&2
       exit 1
@@ -204,7 +204,17 @@ test_stack() {
     exit 1
   fi
 
-  echo "All PHP and admin API checks passed."
+  echo "Testing the protected contact endpoint..."
+  contact_response="$(curl --silent --show-error --fail \
+    "http://127.0.0.1:${WEB_PORT}/api/index.php" \
+    -H "Authorization: Bearer $session_token")"
+
+  if [[ "$contact_response" != *'"contacts"'* ]]; then
+    echo "The contact endpoint did not return a contact list." >&2
+    exit 1
+  fi
+
+  echo "All PHP, admin API, and contact API checks passed."
 }
 
 show_logs() {

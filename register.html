@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | COP 4331 Contact Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="alternate icon" href="favicon.ico">
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="js/code.js" defer></script>
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100 py-5">
+    <div class="background-glow"></div>
+    <main class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+                <div class="text-center mb-4">
+                    <div class="app-icon-wrapper mb-3 mx-auto">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h1 id="title" class="fw-bold tracking-tight">Create an Account</h1>
+                    <p class="text-secondary-contrast small">COP 4331 Contact Manager</p>
+                </div>
+
+                <div class="card glass-card shadow-lg border-0 p-4 p-sm-5">
+                    <div class="card-body p-0">
+                        <form id="registerForm" onsubmit="event.preventDefault(); registerUser();">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label for="registerFirstName" class="form-label form-label-contrast small">First Name</label>
+                                    <input type="text" id="registerFirstName" class="form-control" maxlength="50" autocomplete="given-name" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="registerLastName" class="form-label form-label-contrast small">Last Name</label>
+                                    <input type="text" id="registerLastName" class="form-control" maxlength="50" autocomplete="family-name" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="registerUsername" class="form-label form-label-contrast small">Username</label>
+                                    <input type="text" id="registerUsername" class="form-control" maxlength="50" autocomplete="username" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="registerPassword" class="form-label form-label-contrast small">Password</label>
+                                    <input type="password" id="registerPassword" class="form-control" minlength="8" autocomplete="new-password" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="registerPasswordConfirm" class="form-label form-label-contrast small">Confirm Password</label>
+                                    <input type="password" id="registerPasswordConfirm" class="form-control" minlength="8" autocomplete="new-password" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="buttons btn btn-primary w-100 py-3 fw-semibold rounded-3">
+                                        <i class="bi bi-person-plus me-2"></i>Create Account
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="mt-3 text-center">
+                            <span id="registerResult" class="small fw-semibold" aria-live="polite"></span>
+                        </div>
+                        <div class="text-center mt-4">
+                            <a href="index.html" class="text-secondary-contrast">
+                                <i class="bi bi-arrow-left me-1"></i>Back to Login
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
