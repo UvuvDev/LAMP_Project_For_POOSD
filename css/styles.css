@@ -208,4 +208,5 @@ body {
 
 #contactList {
     word-break: break-word;
+    min-height: 400px;
 }
