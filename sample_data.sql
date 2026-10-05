@@ -7,13 +7,17 @@
 USE `ContactsAppDB`;
 
 -- 1. Seed Sample Users
--- (Plaintext passwords for demo only)
+-- (Plaintext passwords for demo users; the administrator password is hashed.)
 
 INSERT INTO `Users` (`FirstName`, `LastName`, `Username`, `Password`, `Role`, `IsActive`, `CreatedAt`, `UpdatedAt`)
 VALUES ('Aniya', 'Ross', 'ARoss', 'DemoPass', 'user', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 INSERT INTO `Users` (`FirstName`, `LastName`, `Username`, `Password`, `Role`, `IsActive`, `CreatedAt`, `UpdatedAt`)
 VALUES ('Finn', 'the Human', 'RealHero', 'Radical!1', 'user', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Seed the administrator account with the same password hash as the live site.
+INSERT INTO `Users` (`FirstName`, `LastName`, `Username`, `Password`, `Role`, `IsActive`, `CreatedAt`, `UpdatedAt`)
+VALUES ('Site', 'Administrator', 'admin', '$2y$10$Se3/Pn2j79aIoQ4evKOF9.tyiu3.GU2wnt32hT1.G.Ax5wMDyiOT6', 'admin', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- 2. Seed Initial Contacts for User ID 1 (ARoss)
 

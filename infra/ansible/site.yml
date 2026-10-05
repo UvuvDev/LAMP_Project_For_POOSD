@@ -4,6 +4,12 @@
   become: true
   gather_facts: true
 
+  # group_vars/ files are matched against GROUP NAMES, so group_vars/vault.yml
+  # would only load for a group called "vault". Load it explicitly instead --
+  # ansible-vault encrypted files are decrypted here just the same.
+  vars_files:
+    - group_vars/vault.yml
+
   pre_tasks:
     - name: Fail early when the database password was never set
       ansible.builtin.assert:

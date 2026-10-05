@@ -75,12 +75,34 @@
   changed_when: false
   when: app_source_dir | length > 0 and app_schema_files | length > 0
 
+# mysql_db resolves `target` on the managed host, but app_source_dir is a path
+# on the control machine -- and *.sql is excluded from the docroot sync, so the
+# files are not on the VM yet. Stage them outside the document root first.
+- name: Create the schema staging directory
+  ansible.builtin.file:
+    path: "{{ app_sql_dir }}"
+    state: directory
+    owner: root
+    group: "{{ app_group }}"
+    mode: "0750"
+  when: app_source_dir | length > 0 and app_schema_files | length > 0
+
+- name: Stage the application schema on the host
+  ansible.builtin.copy:
+    src: "{{ app_source_dir | regex_replace('/?$', '/') }}{{ item }}"
+    dest: "{{ app_sql_dir }}/{{ item }}"
+    owner: root
+    group: "{{ app_group }}"
+    mode: "0640"
+  loop: "{{ app_schema_files }}"
+  when: app_source_dir | length > 0 and app_schema_files | length > 0
+
 # Imported only into an empty database, so re-runs never duplicate seed rows.
 - name: Import the application schema
   ansible.mysql.mysql_db:
     name: "{{ db_name }}"
     state: import
-    target: "{{ app_source_dir | regex_replace('/?$', '/') }}{{ item }}"
+    target: "{{ app_sql_dir }}/{{ item }}"
     login_unix_socket: "{{ mariadb_socket | default('/run/mysqld/mysqld.sock') }}"
   loop: "{{ app_schema_files }}"
   when:

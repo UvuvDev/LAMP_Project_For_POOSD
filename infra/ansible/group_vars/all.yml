@@ -10,7 +10,7 @@ app_user: www-data
 app_group: www-data
 
 # Hostnames the vhost answers to. Leave the default to serve on the raw IP.
-app_server_name: "{{ ansible_host }}"
+app_server_name: "poosd.shuroko-exe.dev"
 app_server_aliases: []
 
 # Set to a directory on the control machine to deploy your own code instead of
@@ -56,9 +56,9 @@ php_extra_packages: []
 # ---------------------------------------------------------------------------
 # TLS (Let's Encrypt). Requires a real DNS name pointing at the VM.
 # ---------------------------------------------------------------------------
-tls_enabled: false
-tls_domains: []
-tls_email: ""
+tls_enabled: true
+tls_domains: ["poosd.shuroko-exe.dev"]
+tls_email: "bfernandez@hackucf.org"
 
 # ---------------------------------------------------------------------------
 # Host basics
